@@ -13,6 +13,7 @@ bool ReadDevice(BYTE * usbdata, DWORD & lenBytes);
 void GetSetting();
 bool USBInit();
 
+// 两个buf
 class Setting
 {
 public:

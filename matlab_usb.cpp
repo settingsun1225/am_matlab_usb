@@ -64,6 +64,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 {
 	int nRetCode = 0;
 
+	// 获取当前进程本身句柄
 	HMODULE hModule = ::GetModuleHandle(NULL);
 
 	if (hModule != NULL)
@@ -94,7 +95,9 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 char * DataReadBuffer;
 void MainProgram()
 {
+    // 在当前目录下，创建 /data 和 /tmp 两个目录
 	Init();
+    // 检查是否存在device，结果输出到temp下对应文件内
 	USBCheck();
 	GetSetting();
 	g_setting.SetValue(40, PaChannel, 0);
@@ -146,7 +149,7 @@ void MainProgram()
 	return;
 }
 
-
+// 构造 CCyUSBDevice，返回device描述 0-"不存在device"，2-"SAT-USB"，3-"Streamer"
 int CyOpenTest()
 {
 	CCyUSBDevice *USBDevicetest = new CCyUSBDevice();
@@ -165,14 +168,16 @@ int CyOpenTest()
 	return bDeviceExist;
 }
 
+// 在当前目录下，创建 /data 和 /tmp 两个目录
 void Init()
 {
 	char pFileName[MAX_PATH];
+	// 获取当前程序所在的目录， pFileName 接收路径的字符串缓冲区，MAX_PATH 路径字符缓冲区的大小
 	GetModuleFileName(NULL, pFileName, MAX_PATH);
 	CString csFullPath(pFileName);
 	int npos = csFullPath.ReverseFind('\\');
+	// 当前运行地址，cpp文件所在的目录地址
 	RunningPath = csFullPath.Left(npos);
-
 
 	if (!PathIsDirectory(RunningPath + "\\temp"))
 		CreateDirectory(RunningPath + "\\temp", 0);
@@ -183,10 +188,11 @@ void Init()
 void USBCheck()
 {
 	bDeviceExist = 0;
+    // 构造 CCyUSBDevice，返回device描述 0-"不存在device"，2-"SAT-USB"，3-"Streamer"
 	bDeviceExist = CyOpenTest();
 	CStdioFile IfUSB;
 	CString Filename;
-	if (bDeviceExist == 3)
+	if (bDeviceExist == 3) // =r，则在 temp/USB3Linked.txt中输出 USB3Linked
 	{
 		m_sStatus = "Ready (3.0)";
 		Filename = RunningPath + "\\temp\\USB3Linked.txt";
@@ -196,7 +202,7 @@ void USBCheck()
 			IfUSB.Close();
 		}
 	}
-	else if (bDeviceExist)
+	else if (bDeviceExist) // =2，则在 temp/USBLinked.txt中输出 USBLinked
 	{
 		m_sStatus = "Ready";
 		Filename = RunningPath + "\\temp\\USBLinked.txt";
@@ -206,7 +212,7 @@ void USBCheck()
 			IfUSB.Close();
 		}
 	}
-	else
+	else // 不存在device，则在 temp/USBUnlinked.txt中输出 USBUnlinked
 	{
 		m_sStatus = "Unavailable";
 		Filename = RunningPath + "\\temp\\USBUnlinked.txt";
@@ -220,6 +226,7 @@ void USBCheck()
 
 void GetSetting()
 {
+    // 读取文件 Setting.txt
 	CString Filename;
 	Filename = RunningPath + "\\Setting.txt";
 	CStdioFile file;
@@ -231,10 +238,12 @@ void GetSetting()
 		vecResult.push_back(strValue);
 	}
 	file.Close();
+	// 如果配置数量 != 3，异常返回
 	if (vecResult.size() != 3)
 	{
 		return;
 	}
+	// 数据第二个更新到 SampleTime，第三个更新到 PaChannel
 	SampleTime = atoi(vecResult[1]);
 	PaChannel = atoi(vecResult[2]);
 }
